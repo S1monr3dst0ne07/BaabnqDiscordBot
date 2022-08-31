@@ -12,10 +12,8 @@ DELIM = '```'
 class cServer(discord.Client):
     def __init__(self):
         super().__init__()
-    
         Compiler.cUtils.Error = cServer.CompError
-        self.xCompiler = Compiler.cCompiler()
-        
+            
     @staticmethod
     def CompError(xMsg):
         raise Exception(xMsg)
@@ -46,7 +44,7 @@ class cServer(discord.Client):
         
         #consume terminals
         xArgs = [x for x in xTerminals[1:] if x.strip()]
-        
+                
         xCall        = self.Cons(xArgs)
         self.Depo(xArgs)
         xCodeBuffer  = self.Cons(xArgs)
@@ -55,6 +53,7 @@ class cServer(discord.Client):
         self.Depo(xArgs)
 
         try:
+            self.xCompiler = Compiler.cCompiler()
             xAsm = self.xCompiler.Compile("\n".join(xCodeBuffer))
 
         except Exception as E:
@@ -69,18 +68,24 @@ class cServer(discord.Client):
             
             xRunner = threading.Thread(target = xVM.Interpret)
             xRunner.start()
-            xRunner.join(timeout = 30)
+            xRunner.join(timeout = 5)
                         
             if xRunner.is_alive():
-                await xMsg.channel.send(f'<@{xMsg.author.id}> Timeout reached, killing runner (sorry V.V)')
-                xVM.xProgrammIndex == len(self.xLineStructures) + 100
+                await xMsg.channel.send(f'<@{xMsg.author.id}> Timeout reached, killing runner (sorry QwQ)')
+                xVM.xProgrammIndex = len(xVM.xLineStructures) + 1
                 
             else:
-                xOutput = xStdOutCap.getvalue()
-                await xMsg.channel.send(f'```\n{xOutput}\n```')
+                try:
+                    xOutput = xStdOutCap.getvalue()
+                    await xMsg.channel.send(f'```\n{xOutput}\n```')
+
+                except discord.errors.HTTPException:
+                    await xMsg.channel.send(f'<@{xMsg.author.id}> Senpai, *moan*, your output is too big')
+                    
+
                 
             sys.stdout = xTempStd
-                
+            xRunner.join()
             
                     
 xToken = open("token.txt", "r").read()

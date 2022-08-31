@@ -353,13 +353,10 @@ test file format:
     def Interpret(self, xEntryAddress = 0):
         self.xProgrammIndex = xEntryAddress
         self.xTotalIndex = 0
-        
+                
         try:
             xStartTime = time.time()
-            while self.xProgrammIndex < len(self.xLineStructures):
-                                
-                
-                
+            while self.xProgrammIndex < len(self.xLineStructures):                
                 xLine = self.xLineStructures[self.xProgrammIndex]
                 if self.xConfig["PrintCommand"]: print(xLine)
                 
