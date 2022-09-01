@@ -33,10 +33,9 @@ class cServer:
     async def on_ready():
         print("Server running")
 
-    @xClient.command(aliases=["bq"])
-    async def OnCommandReceive(xCtx):
-        xMsg = xCtx.message
-        if xMsg.author == xClient.user:
+    @xClient.event
+    async def on_message(xMsg):
+        if xMsg.author == xClient.user or not xMsg.content.startswith("/bq"):
            return
 
         if xMsg.attachments:
