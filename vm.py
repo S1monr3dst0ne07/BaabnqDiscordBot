@@ -556,7 +556,7 @@ test file format:
         except KeyboardInterrupt:
             pass
 
-        except KeyError:
+        except KeyError as E:
             print("Error: label not found\n    {}".format(str(self.xLineStructures[self.xProgrammIndex])))
         
         if self.xConfig["DisplayTime"]: print(f"Execution took {str(self.xTotalIndex)} cycles and {time.time() - xStartTime} seconds")

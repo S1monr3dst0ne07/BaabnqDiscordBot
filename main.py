@@ -5,56 +5,59 @@ import threading
 import vm
 import io
 import discord, io, sys
+from discord.ext import commands
 
-        
+xIntents = discord.Intents.all()
+xClient = commands.Bot(command_prefix='/', intents=xIntents)        
 DELIM = '```'
         
-class cServer(discord.Client):
-    def __init__(self):
-        super().__init__()
-        Compiler.cUtils.Error = cServer.CompError
-            
+class cServer:            
     @staticmethod
     def CompError(xMsg):
         raise Exception(xMsg)
     
-    
-    def Cons(self, xTerms):
+    @staticmethod
+    def Cons(xTerms):
         xBuffer = []
         while len(xTerms) > 0 and xTerms[0] != DELIM: 
             xBuffer.append(xTerms.pop(0))
             
         return xBuffer
     
-    def Depo(self, xTerms):
+    @staticmethod
+    def Depo(xTerms):
         if len(xTerms) > 0 and xTerms[0] == DELIM:
             xTerms.pop(0)       
     
-    async def on_ready(self):
+    @xClient.event
+    async def on_ready():
         print("Server running")
-        
-    async def on_message(self, xMsg):
-        if xMsg.author == xServer.user:
+
+    @xClient.command(aliases=["bq"])
+    async def OnCommandReceive(xCtx):
+        xMsg = xCtx.message
+        if xMsg.author == xClient.user:
            return
-       
-        xTerminals = xMsg.content.split("\n")
-        if len(xTerminals) == 0 or xTerminals[0].strip() != "/bq":
-            print(f'Message "{xTerminals}" not matching')
-            return
-        
-        #consume terminals
-        xArgs = [x for x in xTerminals[1:] if x.strip()]
-                
-        xCall        = self.Cons(xArgs)
-        self.Depo(xArgs)
-        xCodeBuffer  = self.Cons(xArgs)
-        self.Depo(xArgs)
-        xInputBuffer = self.Cons(xArgs)
-        self.Depo(xArgs)
+
+        if xMsg.attachments:
+            xCodeBuffer = str((await xMsg.attachments[0].read()).decode('utf-8')).replace("\r", "").split("\n")            
+            
+        else:            
+            #consume terminals
+            xTerminals = xMsg.content.split("\n")
+            xArgs = [x for x in xTerminals[1:] if x.strip()]
+            xCall        = cServer.Cons(xArgs)
+            cServer.Depo(xArgs)
+            xCodeBuffer  = cServer.Cons(xArgs)
+            cServer.Depo(xArgs)
+            xInputBuffer = cServer.Cons(xArgs)
+            cServer.Depo(xArgs)
+
+
 
         try:
-            self.xCompiler = Compiler.cCompiler()
-            xAsm = self.xCompiler.Compile("\n".join(xCodeBuffer))
+            xCompiler = Compiler.cCompiler()
+            xAsm = xCompiler.Compile("\n".join(xCodeBuffer))
 
         except Exception as E:
             await xMsg.channel.send(f'<@{xMsg.author.id}> {E}')
@@ -62,13 +65,14 @@ class cServer(discord.Client):
         else:
             xVM = vm.cMain()
             xVM.LoadFile(xAsm[0])
+            xVM.xConfig.update({ "DisplayTime" : True })
             
             xTempStd = sys.stdout
             sys.stdout = xStdOutCap = io.StringIO()
             
             xRunner = threading.Thread(target = xVM.Interpret)
             xRunner.start()
-            xRunner.join(timeout = 5)
+            xRunner.join(timeout = 30)
                         
             if xRunner.is_alive():
                 await xMsg.channel.send(f'<@{xMsg.author.id}> Timeout reached, killing runner (sorry QwQ)')
@@ -88,6 +92,9 @@ class cServer(discord.Client):
             xRunner.join()
             
                     
+Compiler.cUtils.Error = cServer.CompError
 xToken = open("token.txt", "r").read()
-xServer = cServer()    
-xServer.run(xToken)
+xClient.run(xToken)
+
+
+
